@@ -1,0 +1,32 @@
+import codecademylib
+import pandas as pd
+from matplotlib import pyplot as plt
+
+species = pd.read_csv('species_info.csv')
+
+species.fillna('No Intervention', inplace = True)
+
+#Create a new column in species called is_protected, which is True if conservation_status is not equal to 'No Intervention', and False otherwise.
+species['is_protected'] = species.conservation_status != 'No Intervention'
+
+#Now group by both category and is_protected
+category_counts = species.groupby(['category', 'is_protected']).scientific_name.nunique().reset_index()
+print category_counts.head()
+
+#It's going to be easier to view this data if we pivot it. Using pivot, rearrange category_counts: so that:
+#columns is is_protected
+#index is category
+#values is scientific_name
+category_pivot = category_counts.pivot(
+         	index= 'category',
+          columns= 'is_protected',
+          values= 'scientific_name')\
+   .reset_index()
+
+#True and False are pretty vague column names. Let's use the .columns to rename the categories True and False to something more descriptive:
+category_pivot.columns = ['category', 'not_protected', 'protected' ]
+
+#Let's create a new column in category_pivot called percent_protected, which is equal to protected (the number of species that are protected) divided by protected plus not_protected (the total number of species).
+category_pivot['percent_protected'] = category_pivot['protected']/(category_pivot['protected']+category_pivot['not_protected'])*100
+
+print category_pivot
