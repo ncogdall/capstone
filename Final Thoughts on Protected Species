@@ -1,0 +1,77 @@
+import codecademylib
+import pandas as pd
+from matplotlib import pyplot as plt
+
+# Loading the Data
+species = pd.read_csv('species_info.csv')
+
+# print species.head()
+
+# Inspecting the DataFrame
+species_count = len(species)
+
+species_type = species.category.unique()
+
+conservation_statuses = species.conservation_status.unique()
+
+# Analyze Species Conservation Status
+conservation_counts = species.groupby('conservation_status').scientific_name.count().reset_index()
+
+# print conservation_counts
+
+# Analyze Species Conservation Status II
+species.fillna('No Intervention', inplace = True)
+
+conservation_counts_fixed = species.groupby('conservation_status').scientific_name.count().reset_index()
+
+# Plotting Conservation Status by Species
+protection_counts = species.groupby('conservation_status')\
+    .scientific_name.count().reset_index()\
+    .sort_values(by='scientific_name')
+    
+# plt.figure(figsize=(10, 4))
+# ax = plt.subplot()
+# plt.bar(range(len(protection_counts)),
+#        protection_counts.scientific_name.values)
+# ax.set_xticks(range(len(protection_counts)))
+# ax.set_xticklabels(protection_counts.conservation_status.values)
+# plt.ylabel('Number of Species')
+# plt.title('Conservation Status by Species')
+# labels = [e.get_text() for e in ax.get_xticklabels()]
+# print ax.get_title()
+# plt.show()
+
+species['is_protected'] = species.conservation_status != 'No Intervention'
+
+category_counts = species.groupby(['category', 'is_protected'])\
+                         .scientific_name.count().reset_index()
+  
+# print category_counts.head()
+
+category_pivot = category_counts.pivot(columns='is_protected', index='category', values='scientific_name').reset_index()
+
+#rename the catagories 
+category_pivot.columns = ['category', 'not_protected', 'protected']
+
+#create a new coloumn that calculates the percentage of protected species 
+category_pivot['percent_protected'] = category_pivot.protected / (category_pivot.protected + category_pivot.not_protected)
+
+#Create a table called contingency and fill it with the correct values. You do not need to include column names in the contingency table.
+print category_pivot.head()
+
+#Create a table called contingency and fill it with the correct values. You do not need to include column names in the contingency table.
+contingency = [[30, 146], [75, 413]]
+
+#In order to perform our chi-squared test, we'll need to import the correct function from scipy. Paste the following code and run it:
+from scipy.stats import chi2_contingency
+
+#Run chi2_contingency on the contingency table.
+chi2_stat, pval, dof, t = chi2_contingency(contingency)
+print pval
+
+#It looks like this difference isn't significant!
+#Let's test another. Is the difference between Reptile and Mammal significant?
+#Save the p-value to pval_reptile_mammal.
+reptile_contingency = [[30, 146], [5, 73]]
+chi2_stat, pval_reptile_mammal, dof, t = chi2_contingency(reptile_contingency)
+print pval_reptile_mammal
